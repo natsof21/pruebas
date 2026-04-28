@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOIA · Mapa interactivo de agentes</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --panel:#ffffff;
+      --text:#172033;
+      --muted:#607089;
+      --line:#d9e2ef;
+      --blue:#2563eb;
+      --blue2:#1e40af;
+      --soft:#eef4ff;
+      --green:#e8f7ee;
+      --amber:#fff7e8;
+      --red:#fff1f2;
+      --dark:#0f172a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eef4ff,#f8fafc);color:var(--text)}
+    .wrap{max-width:1180px;margin:0 auto;padding:24px}
+    .hero{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:24px;padding:28px;box-shadow:0 18px 50px rgba(15,23,42,.18)}
+    .hero h1{margin:0;font-size:34px;line-height:1.1}
+    .hero p{margin:10px 0 0;color:#dbe6ff;max-width:850px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    button{border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn-primary{background:#fff;color:#0f172a}
+    .btn-secondary{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.18)}
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;margin-top:22px}
+    .sidebar,.main{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 12px 35px rgba(15,23,42,.08)}
+    .sidebar{padding:18px;position:sticky;top:16px;height:fit-content}
+    .main{padding:22px}
+    h2{margin:0 0 14px;font-size:24px}
+    h3{margin:0 0 8px;font-size:18px}
+    .small{font-size:13px;color:var(--muted);line-height:1.45}
+    .tabs{display:grid;gap:9px;margin-top:14px}
+    .tab{width:100%;text-align:left;background:#f8fafc;color:#26364f;border:1px solid var(--line);padding:12px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .tab.active{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 10px 24px rgba(37,99,235,.22)}
+    .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.08);white-space:nowrap}
+    .tab.active .badge{background:rgba(255,255,255,.18)}
+    .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:18px}
+    .node{padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--line);font-weight:800;font-size:13px;cursor:pointer}
+    .node.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .arrow{color:#94a3b8;font-weight:900}
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+    .card{background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:16px;min-height:120px}
+    .card.good{background:var(--green)}
+    .card.warn{background:var(--amber)}
+    .card.red{background:var(--red)}
+    .card ul{margin:8px 0 0;padding-left:18px;color:#26364f}
+    .card li{margin:5px 0}
+    .mono{background:#0f172a;color:#e2e8f0;border-radius:16px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;overflow:auto;line-height:1.5}
+    .pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+    .step{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;position:relative}
+    .step strong{display:block;margin-bottom:6px;color:#0f172a}
+    .step .num{position:absolute;right:12px;top:10px;background:var(--soft);color:var(--blue2);border-radius:999px;padding:4px 8px;font-size:12px;font-weight:900}
+    .decision{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+    .mini-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:900;margin-bottom:8px}
+    .callout{background:var(--soft);border:1px solid #c8d9ff;border-radius:18px;padding:15px;margin:16px 0;color:#1e3a8a}
+    .footer{margin:22px 0;color:#64748b;font-size:13px;text-align:center}
+    @media(max-width:920px){.layout{grid-template-columns:1fr}.sidebar{position:static}.cards,.decision,.pipeline{grid-template-columns:1fr}.hero h1{font-size:28px}}
+    @media print{body{background:#fff}.toolbar,.sidebar{display:none}.layout{display:block}.main,.hero{box-shadow:none}.wrap{padding:0}.main{border:none}.cards,.decision{grid-template-columns:1fr 1fr}.pipeline{grid-template-columns:repeat(4,1fr)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>SOIA · Mapa interactivo de agentes</h1>
+      <p>Vista visual para entender quién hace qué, qué entra, qué sale y cómo se prueba cada agente antes de automatizar en n8n.</p>
+      <div class="toolbar">
+        <button class="btn-primary" onclick="window.print()">Imprimir / PDF</button>
+        <button class="btn-secondary" onclick="downloadHtml()">Descargar HTML</button>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>Agentes</h2>
+        <p class="small">Tocá un agente para ver su rol, límites, inputs, outputs y prueba mínima.</p>
+        <div class="tabs" id="tabs"></div>
+      </aside>
+
+      <main class="main">
+        <section>
+          <h2>Flujo principal comprador</h2>
+          <div class="flow" id="flow"></div>
+          <div class="callout"><strong>Idea central:</strong> Sofi conversa y coordina. Aria recolecta. Vera valida. Orion ordena. Rodrigo aprueba. Sofi responde. M1 guarda y recupera memoria.</div>
+        </section>
+
+        <section id="agentPanel"></section>
+
+        <section style="margin-top:26px">
+          <h2>Cómo probar sin n8n</h2>
+          <div class="pipeline">
+            <div class="step"><span class="num">1</span><strong>Input falso</strong><span class="small">Crear un JSON simple con tenant_id, case_id, trace_id y mensaje.</span></div>
+            <div class="step"><span class="num">2</span><strong>Prompt del agente</strong><span class="small">Ejecutar solo ese agente, sin conectar todo el sistema.</span></div>
+            <div class="step"><span class="num">3</span><strong>Validar output</strong><span class="small">Confirmar JSON válido, campos completos y sin inventar datos.</span></div>
+            <div class="step"><span class="num">4</span><strong>Recién integrar</strong><span class="small">Cuando pase la prueba, se convierte a nodo o subworkflow.</span></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="footer">SOIA Systems · Diseño visual de agentes · Etapa previa a automatización</div>
+  </div>
+
+  <script>
+    const agents = {
+      sofi: {
+        name:'Sofi', tag:'Orquestador', emoji:'💬', type:'Conversacional',
+        role:'Entiende al cliente, estructura el caso, decide si falta información y compone la respuesta final.',
+        input:['Mensaje del cliente','Contexto de conversación','tenant_id, case_id, trace_id, job_id','Resultados finales de Orion/Rodrigo para compose_response'],
+        output:['Caso estructurado','ambiguity_flags','Pregunta aclaratoria si falta algo','Respuesta final al cliente'],
+        doesNot:['No scrapea portales','No valida disponibilidad','No rankea propiedades','No escribe memoria directamente'],
+        test:'Dale: “Busco casa en Bahía Blanca hasta USD 150.000 con patio y garage”. Debe devolver status ready_to_dispatch y criterios normalizados.',
+        next:'Si está listo → Aria/Vera. Si faltan datos → pregunta al cliente. Si hay resultado final → compose_response.'
+      },
+      m1: {
+        name:'M1', tag:'Memoria', emoji:'🧠', type:'Memoria operativa',
+        role:'Guarda y devuelve contexto operativo. No conversa. No decide. Es la memoria viva del caso.',
+        input:['case_id','tenant_id','Preferencias del cliente','Resultados validados','Eventos del caso'],
+        output:['Historial útil','Preferencias conocidas','Resultados previos','Contexto para Sofi/Vera/Orion'],
+        doesNot:['No conversa con cliente','No decide shortlist','No valida disponibilidad','No reemplaza PostgreSQL'],
+        test:'Dale un write-memory con preferencias del cliente y luego un read-memory del mismo case_id. Debe devolver contexto correcto.',
+        next:'Sofi consulta M1 al inicio. Vera y Mia escriben novedades. Orion puede leer historial para evitar duplicados.'
+      },
+      aria: {
+        name:'Aria', tag:'Recolector', emoji:'🔎', type:'Recolección externa',
+        role:'Busca información externa y normaliza candidatos crudos.',
+        input:['Criterios de búsqueda desde Sofi','Fuentes habilitadas','Parámetros por tenant'],
+        output:['Candidatos crudos','Fuente original','URL','Datos normalizados mínimos'],
+        doesNot:['No valida disponibilidad','No rankea','No responde al cliente','No pasa directo a Orion sin Vera'],
+        test:'Dale criterios falsos y una lista mock de propiedades. Debe devolver array normalizado con fuente, precio, zona y url.',
+        next:'Aria → Vera. Siempre pasa por validación antes de consolidar.'
+      },
+      vera: {
+        name:'Vera', tag:'Validador', emoji:'✅', type:'Validación y enriquecimiento',
+        role:'Contrasta disponibilidad, limpia ruido y agrega contexto útil de mercado.',
+        input:['Candidatos desde Aria','Contexto desde M1','Respuestas humanas o fuentes internas'],
+        output:['Disponibilidad validada','Observaciones','Riesgos','Paquete tratado para Orion'],
+        doesNot:['No arma shortlist final','No conversa con cliente','No decide ranking definitivo','No inventa confirmaciones'],
+        test:'Dale 3 propiedades: una disponible, una caída y una incierta. Debe marcar status y explicar observaciones.',
+        next:'Vera → Orion. También puede escribir en M1 los cambios de disponibilidad.'
+      },
+      orion: {
+        name:'Orion', tag:'Consolidador', emoji:'📊', type:'Ranking y shortlist',
+        role:'Fusiona, deduplica, puntúa y arma shortlist final.',
+        input:['Resultados validados por Vera','Criterios originales de Sofi','Contexto de M1'],
+        output:['Shortlist ordenada','Score por candidato','Razón del ranking','Descartes justificados'],
+        doesNot:['No conversa','No busca fuentes externas','No valida disponibilidad','No cambia criterios del cliente'],
+        test:'Dale 5 candidatos con duplicados. Debe devolver los mejores 3, sin duplicados y con score.',
+        next:'Orion → Sofi compose_response, pasando antes por Rodrigo si hay control humano.'
+      },
+      rodrigo: {
+        name:'Rodrigo', tag:'Quality Gate', emoji:'🧑‍⚖️', type:'Control humano/calidad',
+        role:'Aprueba, rechaza o pide ajuste antes de enviar respuesta al cliente.',
+        input:['Shortlist de Orion','Mensaje propuesto por Sofi','Reglas comerciales','Riesgos detectados'],
+        output:['approved true/false','Notas de revisión','Bloqueos','Pedido de ajuste'],
+        doesNot:['No rehace toda la búsqueda','No scrapea','No reemplaza a Sofi','No altera datos sin trazabilidad'],
+        test:'Dale una respuesta con una propiedad sin disponibilidad. Debe bloquear o pedir validación.',
+        next:'Si aprueba → Sofi responde. Si rechaza → vuelve a Vera/Orion/Sofi según motivo.'
+      },
+      nexus: {
+        name:'Nexus', tag:'Captación', emoji:'📡', type:'Oportunidades',
+        role:'Detecta señales de oportunidad comercial o captación de propiedades.',
+        input:['Feeds de mercado','Señales públicas','Datos comerciales','Reglas del tenant'],
+        output:['Oportunidad detectada','Nivel de prioridad','Motivo','Handoff para Mia'],
+        doesNot:['No responde a compradores','No arma shortlist de búsqueda','No valida como Vera','No hace outreach directo'],
+        test:'Dale 10 señales falsas y debe detectar cuáles son oportunidades con score.',
+        next:'Nexus → Mia → M1. Es carril paralelo, no flujo principal comprador.'
+      },
+      mia: {
+        name:'Mia', tag:'Outreach', emoji:'🤝', type:'Seguimiento comercial',
+        role:'Hace seguimiento comercial sobre oportunidades detectadas por Nexus.',
+        input:['Oportunidad desde Nexus','Contexto de M1','Plantillas de mensaje','Estado comercial'],
+        output:['Mensaje de contacto','Estado de seguimiento','Resultado comercial','Update a M1'],
+        doesNot:['No busca compradores','No rankea propiedades','No reemplaza control humano','No promete condiciones no validadas'],
+        test:'Dale una oportunidad de propietario y debe generar mensaje breve + estado next_followup.',
+        next:'Mia registra resultado en M1 y puede avisar a humano comercial.'
+      }
+    };
+
+    const order = ['sofi','m1','aria','vera','orion','rodrigo','nexus','mia'];
+    const flowOrder = ['sofi','m1','aria','vera','orion','rodrigo','sofi'];
+    let current = 'sofi';
+
+    function renderTabs(){
+      const tabs = document.getElementById('tabs');
+      tabs.innerHTML = order.map(id => {
+        const a = agents[id];
+        return `<button class="tab ${id===current?'active':''}" onclick="selectAgent('${id}')"><span>${a.emoji} ${a.name}</span><span class="badge">${a.tag}</span></button>`;
+      }).join('');
+    }
+
+    function renderFlow(){
+      const flow = document.getElementById('flow');
+      flow.innerHTML = flowOrder.map((id,idx) => {
+        const label = id === 'sofi' && idx === 6 ? 'Sofi responde' : agents[id].name;
+        const node = `<span class="node ${id===current?'active':''}" onclick="selectAgent('${id}')">${agents[id].emoji} ${label}</span>`;
+        return node + (idx < flowOrder.length-1 ? '<span class="arrow">→</span>' : '');
+      }).join('');
+    }
+
+    function list(items){ return `<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`; }
+
+    function renderPanel(){
+      const a = agents[current];
+      document.getElementById('agentPanel').innerHTML = `
+        <section>
+          <h2>${a.emoji} ${a.name} <span style="font-size:14px;color:#64748b">· ${a.tag}</span></h2>
+          <p class="small"><strong>Tipo:</strong> ${a.type}</p>
+          <div class="cards">
+            <div class="card good"><div class="mini-title">Rol simple</div><h3>Qué hace</h3><p>${a.role}</p></div>
+            <div class="card warn"><div class="mini-title">Límites</div><h3>Qué NO hace</h3>${list(a.doesNot)}</div>
+            <div class="card"><div class="mini-title">Entrada</div><h3>Inputs</h3>${list(a.input)}</div>
+            <div class="card"><div class="mini-title">Salida</div><h3>Outputs</h3>${list(a.output)}</div>
+          </div>
+          <div class="decision">
+            <div class="card">
+              <div class="mini-title">Prueba mínima</div>
+              <h3>Cómo saber si anda</h3>
+              <p>${a.test}</p>
+            </div>
+            <div class="card">
+              <div class="mini-title">Conexión futura</div>
+              <h3>Qué pasa después</h3>
+              <p>${a.next}</p>
+            </div>
+          </div>
+          <h3 style="margin-top:18px">JSON mental mínimo</h3>
+          <div class="mono">{
+  "tenant_id": "tenant_demo",
+  "case_id": "case_001",
+  "trace_id": "trace_001",
+  "job_id": "job_001",
+  "agent": "${a.name.toLowerCase()}",
+  "input": {},
+  "output": {},
+  "status": "ok | needs_review | error"
+}</div>
+        </section>`;
+    }
+
+    function selectAgent(id){
+      current = id;
+      renderTabs();
+      renderFlow();
+      renderPanel();
+    }
+
+    function downloadHtml(){
+      const blob = new Blob([document.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'soia_mapa_interactivo_agentes.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    }
+
+    renderTabs();
+    renderFlow();
+    renderPanel();
+  </script>
+</body>
+</html>
